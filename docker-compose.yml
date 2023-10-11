@@ -4,7 +4,7 @@ services:
   django_gunicorn:
     volumes:
       - static:/static
-      - ./logs/django:/app/logs
+      - ./logs/django:/app/log
     env_file:
       - .env
     build:
@@ -50,9 +50,9 @@ services:
   celery-worker:
     build:
       context: .
-    command: celery --app worker --loglevel=info --logfile=project/logs/celery.log
+    command: celery --app wotoku_web worker --loglevel=INFO --logfile=/app/celery-log/celery.log --pidfile=celery.pid
     volumes:
-      - ./logs/celery:/app/logs
+      - ./logs/celery:/app/celery-log
     env_file:
       - .env
     environment:

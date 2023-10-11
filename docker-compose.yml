@@ -56,14 +56,14 @@ services:
     env_file:
       - .env
     environment:
-      - CELERY_BROKER_URL=redis://redispassword@redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redispassword@redis:6379/0
+      - CELERY_BROKER_URL=redis://:redispassword@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:redispassword@redis:6379/0
     depends_on:
       - django_gunicorn
       - redis
   flower:
     image: mher/flower:2.0
-    command: [ 'celery', '--broker=redis://redispassword@redis:6379', 'flower', '--port=5555' ]
+    command: [ 'celery', '--broker=redis://:redispassword@redis:6379', 'flower', '--port=5555' ]
     volumes:
       - ./logs/flower:/var/log
     ports:

@@ -22,10 +22,11 @@ services:
     depends_on:
       - django_gunicorn
   redis:
-    build: ./conf/redis
-    command: sh -c "./init.sh"
+    image: bitnami/redis:7.0
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
     volumes:
-      - redis_data:/data:rw
+      - redis_data:/bitnami/redis/data
     ports:
       - "6379:6379"
   postgres:
@@ -39,28 +40,27 @@ services:
     restart: always
     ports:
       - "5432:5432"
-#  celery-worker:
-#    build: .
-#    command: celery --app project.server.tasks.celery worker --loglevel=info --logfile=project/logs/celery.log
-#    volumes:
-#      - .:/usr/src/app
-#    environment:
-#      - CELERY_BROKER_URL=redis://redis:6379/0
-#      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-#    depends_on:
-#      - django_gunicorn
-#      - redis
-#  flower:
-#    build: .
-#    command: celery -A tasks flower
-#    ports:
-#      - "5555:5555"
-#    environment:
-#      CELERY_BROKER_URL: redis://redis
-#      CELERY_RESULT_BACKEND: redis://redis
-#    depends_on:
-#      - celery-worker
-#      - redis
+  celery-worker:
+    build:
+      context: .
+    command: celery --app worker --loglevel=info --logfile=project/logs/celery.log
+    env_file:
+      - .env
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - django_gunicorn
+      - redis
+  flower:
+    image: mher/flower:2.0
+    command: [ 'celery', '--broker=redis://redis:6379', 'flower', '--port=5555' ]
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+      - django_gunicorn
+      - celery-worker
 
 volumes:
   static:

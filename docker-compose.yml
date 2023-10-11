@@ -8,8 +8,11 @@ services:
       - .env
     build:
       context: .
+    command: ["sh", "/entrypoint.sh"]
     ports:
       - "8000:8000"
+    depends_on:
+      - postgres
   nginx:
     build: ./nginx
     volumes:
@@ -18,7 +21,48 @@ services:
       - "80:80"
     depends_on:
       - django_gunicorn
+  redis:
+    build: ./conf/redis
+    command: sh -c "./init.sh"
+    volumes:
+      - redis_data:/data:rw
+    ports:
+      - "6379:6379"
+  postgres:
+    image: "postgres:16"
+    environment:
+      - POSTGRES_USER=db_user
+      - POSTGRES_PASSWORD=db_password
+      - POSTGRES_DB=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    restart: always
+    ports:
+      - "5432:5432"
+#  celery-worker:
+#    build: .
+#    command: celery --app project.server.tasks.celery worker --loglevel=info --logfile=project/logs/celery.log
+#    volumes:
+#      - .:/usr/src/app
+#    environment:
+#      - CELERY_BROKER_URL=redis://redis:6379/0
+#      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+#    depends_on:
+#      - django_gunicorn
+#      - redis
+#  flower:
+#    build: .
+#    command: celery -A tasks flower
+#    ports:
+#      - "5555:5555"
+#    environment:
+#      CELERY_BROKER_URL: redis://redis
+#      CELERY_RESULT_BACKEND: redis://redis
+#    depends_on:
+#      - celery-worker
+#      - redis
 
 volumes:
   static:
-
+  redis_data:
+  postgres_data:
